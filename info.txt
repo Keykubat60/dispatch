@@ -1,0 +1,7 @@
+docker build -t selenium-app .
+
+
+docker run -d --name driverandservices -v "C:/Users/alaad/OneDrive/Desktop/Alaaddin/Eigene Proejekte/Uber/Neuer Ordner/Porgramm/pfad/zu/cookies/driverandservices_cookies.pkl:/app/cookies.pkl" -e UNTERNEHMEN="driverandservices" -e WEBHOOK_ADRESSE="https://bemany-n8n-c1b46415d102.herokuapp.com/webhook/fahrerapp/uber/dispatcher" selenium-app
+
+docker run -d --name bringesel -v "C:/Users/alaad/OneDrive/Desktop/Alaaddin/Eigene Proejekte/Uber/Neuer Ordner/Porgramm/pfad/zu/cookies/bringesel_cookies.pkl:/app/cookies.pkl" -e UNTERNEHMEN="bringesel" -e WEBHOOK_ADRESSE="https://bemany-n8n-c1b46415d102.herokuapp.com/webhook/fahrerapp/uber/dispatcher" selenium-app
+

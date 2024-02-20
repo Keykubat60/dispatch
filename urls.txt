@@ -1,0 +1,9 @@
+https://bemany-n8n-c1b46415d102.herokuapp.com/webhook/fahrerapp/uber/dispatcher
+
+
+
+https://bemany-n8n-c1b46415d102.herokuapp.com/webhook/fahrerapp/uber/dispatcher/alive
+
+- unternehmensname
+- statuscode
+
