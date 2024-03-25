@@ -1,0 +1,57 @@
+version: '3.8'
+services:
+  driverandservices:
+    image: selenium-app
+    container_name: driverandservices.de
+    volumes:
+      - C:/Users/rdp/Desktop/dispatch-master/cookies/driverandservices_cookies.pkl:/app/cookies.pkl
+    environment:
+      UNTERNEHMEN: er@driverandservices.de
+      WEBHOOK_ADRESSE: https://bemany-n8n-c1b46415d102.herokuapp.com/webhook/fahrerapp/uber/dispatcher
+
+  bringesel:
+    image: selenium-app
+    container_name: bringesel
+    volumes:
+      - C:/Users/rdp/Desktop/dispatch-master/cookies/bringesel_cookies.pkl:/app/cookies.pkl
+    environment:
+      UNTERNEHMEN: bringesel@gmail.com
+      WEBHOOK_ADRESSE: https://bemany-n8n-c1b46415d102.herokuapp.com/webhook/fahrerapp/uber/dispatcher
+
+  seker:
+    image: selenium-app
+    container_name: seker
+    volumes:
+      - C:/Users/rdp/Desktop/dispatch-master/cookies/seker.pkl:/app/cookies.pkl
+    environment:
+      UNTERNEHMEN: info@seker-gmbh.com
+      WEBHOOK_ADRESSE: https://bemany-n8n-c1b46415d102.herokuapp.com/webhook/fahrerapp/uber/dispatcher
+
+  ddriver:
+    image: selenium-app
+    container_name: ddriver
+    volumes:
+      - C:/Users/rdp/Desktop/dispatch-master/cookies/ddriver.pkl:/app/cookies.pkl
+    environment:
+      UNTERNEHMEN: dberlingmbh@gmail.com
+      WEBHOOK_ADRESSE: https://bemany-n8n-c1b46415d102.herokuapp.com/webhook/fahrerapp/uber/dispatcher
+
+  prince:
+    image: selenium-app
+    container_name: prince
+    volumes:
+      - C:/Users/rdp/Desktop/dispatch-master/cookies/prince.pkl:/app/cookies.pkl
+    environment:
+      UNTERNEHMEN: ashprince@gmx.de
+      WEBHOOK_ADRESSE: https://bemany-n8n-c1b46415d102.herokuapp.com/webhook/fahrerapp/uber/dispatcher
+
+  CityDrive24:
+    image: selenium-app
+    container_name: citydrive24
+    volumes:
+      - C:/Users/rdp/Desktop/dispatch-master/cookies/citydrive24.pkl:/app/cookies.pkl
+    environment:
+      UNTERNEHMEN: yusuf.korkmaz@gmx.net
+      WEBHOOK_ADRESSE: https://bemany-n8n-c1b46415d102.herokuapp.com/webhook/fahrerapp/uber/dispatcher
+
+

@@ -2,6 +2,7 @@ import asyncio
 from selenium import webdriver
 from aiohttp import ClientSession
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from geopy.geocoders import Nominatim
 from geopy.distance import geodesic
@@ -10,14 +11,20 @@ from dotenv import load_dotenv
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
 import pickle
+import sys 
 
 # Laden der Umgebungsvariablen
 load_dotenv()
 Status = ""
 Counter = 0
+# Fügen Sie eine Variable für die Anzahl der Login-Versuche hinzu
+login_attempts = 0
+max_login_attempts = 3  # Maximale Anzahl an Login-Versuchen
 # Umgebungsvariablen holen
 unternehmen = os.getenv('UNTERNEHMEN')
 webhook_adresse = os.getenv('WEBHOOK_ADRESSE')
+user_email = os.getenv('USER_EMAIL')
+user_password = os.getenv('USER_PASSWORD')
 async def send_data_via_webhook(session, order_data):
     webhook_url = webhook_adresse
     try:
@@ -53,7 +60,7 @@ async def get_distance(origin, destination):
         return 0
 
 async def send_live_check(driver):
-    global Counter, Status 
+    global Counter, Status , max_login_attempts, login_attempts
     while True:
 
         
@@ -66,14 +73,14 @@ async def send_live_check(driver):
         alive_data = {
             "unternehmen": unternehmen,
             "status": Status,
-            "aufträge" : Counter1,
+            "auftraege" : Counter1,
         }
 
         async with ClientSession() as session:
             try:
                 await session.post("https://bemany-n8n-c1b46415d102.herokuapp.com/webhook/fahrerapp/uber/dispatcher/alive", json=alive_data)
                 if Counter1 > 1: 
-                    print(f"Letzte 10 minuten Live-Check für '{unternehmen}'. Es wurden '{Counter1}' Aufträge angenommen. Meldung: {Status}")
+                    print(f"Letzte 10 minuten Live-Check für '{unternehmen}'. Es wurden '{Counter1}' Auftraege angenommen. Meldung: {Status}")
                 elif Counter1 == 1:
                     print(f"Letzte 10 minuten Live-Check für '{unternehmen}'. Es wurde '{Counter1}' Auftrag angenommen. Meldung: {Status}")
                 else:
@@ -108,8 +115,8 @@ async def process_order(driver, order_element):
 
         async with ClientSession() as session:
 
-            response = await send_data_via_webhook(session, order_data)
-            print("Webhook Response:", response)
+            # response = await send_data_via_webhook(session, order_data)
+            # print("Webhook Response:", response)
             print(order_data)
             await asyncio.gather(timerx(driver))
 
@@ -122,9 +129,7 @@ async def process_order(driver, order_element):
 async def timerx(driver):
     await asyncio.sleep(6)
     # Warten, dann Button klicken
-    ''' WebDriverWait(driver, 1).until(
-        EC.visibility_of_element_located((By.CSS_SELECTOR, "button._css-fBvEmy._css-jWnSEI"))
-    ).click()'''
+    # WebDriverWait(driver, 1).until(EC.visibility_of_element_located((By.CSS_SELECTOR, "button._css-fBvEmy._css-jWnSEI"))).click()
     print("Button geklickt")
 
 
@@ -132,9 +137,10 @@ async def main():
 
     print("code läuft")
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
+    # options.add_argument("--headless")
     options.add_argument("--disable-blink-features=AutomationControlled")
-
+    options.add_argument('--start-maximized')
+    options.add_argument('--start-fullscreen')
     # Exclude the collection of enable-automation switches
     options.add_argument("--log-level=3")
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
@@ -169,12 +175,79 @@ async def main():
         await asyncio.sleep(0.1)  # Polling-Intervall
         current_orders = driver.find_elements(By.CSS_SELECTOR, 'tr.MuiTableRow-root')
         if (len(current_orders)) == 0:
-            try:
-                driver.get("https://vsdispatch.uber.com/")
-            except Exception as e:
-                print(e)
-            Status = "Ich bin Ausgeloggt!!"
+            print("!----------- Ich bin ausgeloggt ------------!")
 
+            if login_attempts >= max_login_attempts:
+                print("!----------- Maximale Login-Versuche erreicht, beende den Prozess ------------!")
+                await asyncio.sleep(500)
+                break  # Beendet das gesamte Programm
+                 # Beendet die Schleife und somit den Prozess
+
+            try:
+                print("!------------ Versuche mich einzuloggen.. ------------!")
+                driver.get("https://vsdispatch.uber.com/")
+                WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.ID, "PHONE_NUMBER_or_EMAIL_ADDRESS"))
+                )
+
+                # E-Mail-Adresse eingeben
+                email_input = driver.find_element(By.ID, "PHONE_NUMBER_or_EMAIL_ADDRESS")
+                await asyncio.sleep(1)
+                email_input.send_keys(user_email)
+                await asyncio.sleep(1)
+
+                # Auf den Weiter-Button klicken
+                continue_button = WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.ID, "forward-button"))
+                )
+                continue_button.click()
+                await asyncio.sleep(1)
+
+                try:
+                    # Direktes Suchen nach dem Passwortfeld
+                    password_input = WebDriverWait(driver, 3).until(
+                        EC.presence_of_element_located((By.ID, "PASSWORD"))
+                    )
+                except:
+                    # Wenn das Passwortfeld nicht direkt gefunden wird, auf "Mehr Optionen" klicken
+                    more_options_button = WebDriverWait(driver, 10).until(
+                        EC.element_to_be_clickable((By.ID, "alt-alternate-forms-option-modal"))
+                    )
+                    more_options_button.click()
+                    await asyncio.sleep(1)
+
+                    # Warten und klicken auf den Button "Passwort"
+                    password_button = WebDriverWait(driver, 10).until(
+                        EC.element_to_be_clickable((By.ID, "alt-more-options-modal-password"))
+                    )
+                    password_button.click()
+                    await asyncio.sleep(1)
+
+                    # Passwortfeld nach dem Klicken auf "Mehr Optionen"
+                    password_input = WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.ID, "PASSWORD"))
+                    )
+
+                # Passwort eingeben
+                password_input.send_keys(user_password)
+                with open(user_email+'.txt', 'w') as f:
+                    f.write(driver.print_page())
+                await asyncio.sleep(1)
+                
+                # Auf den Weiter-Button klicken
+                final_continue_button = WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.ID, "forward-button"))
+                )
+                final_continue_button.click()
+
+                await asyncio.sleep(1)
+                print("!------------ Bin Erfolgreich eingeloggt ------------!")
+
+                login_attempts = 0
+            except Exception as e:
+                Status = "Ich bin Ausgeloggt!!"
+                login_attempts += 1
+                print(f"!------------ Versuch '{login_attempts}' von 3 fehlgeschlagen ------------!")
 
         elif (len(current_orders)) != previous_order_count:
             for order in current_orders[previous_order_count:]:
